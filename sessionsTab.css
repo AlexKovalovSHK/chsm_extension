@@ -1,0 +1,151 @@
+/* ===== Sessions Tab Styles ===== */
+
+/* Accordion header compact */
+.session-accordion .accordion-button {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  background: #fff;
+  box-shadow: none;
+}
+.session-accordion .accordion-button:not(.collapsed) {
+  background: #f8f9fa;
+  color: inherit;
+}
+.session-accordion .accordion-button::after {
+  background-size: 12px;
+  width: 12px;
+  height: 12px;
+}
+.session-accordion .accordion-body {
+  padding: 0;
+}
+
+/* Status badge in the header */
+.session-status-badge {
+  font-size: 0.65rem;
+  padding: 0.2em 0.5em;
+  white-space: nowrap;
+}
+
+/* Session header row */
+.session-header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.session-title-text {
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.session-meta-text {
+  font-size: 0.7rem;
+  color: #6c757d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Nested tabs inside accordion body */
+.session-detail-tabs .nav-link {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.75rem;
+}
+.session-detail-tabs .tab-pane {
+  padding: 0.5rem;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+/* Student rows */
+.student-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.78rem;
+}
+.student-row:last-child {
+  border-bottom: none;
+}
+.student-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.student-email {
+  font-size: 0.7rem;
+  color: #6c757d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tg-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.3rem;
+  flex-shrink: 0;
+}
+.tg-dot.active {
+  background-color: #198754; /* Bootstrap success green */
+}
+.tg-dot.inactive {
+  background-color: #adb5bd; /* gray */
+}
+
+/* Subject rows */
+.subject-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.78rem;
+}
+.subject-row:last-child {
+  border-bottom: none;
+}
+.subject-name {
+  font-weight: 500;
+}
+.subject-desc {
+  font-size: 0.7rem;
+  color: #6c757d;
+}
+
+/* Status dropdown in body */
+.status-select-dropdown {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+}
+
+/* Action buttons row */
+.session-actions {
+  display: flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+.session-actions .btn {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+  line-height: 1.2;
+}
+
+/* Top bar with Add button */
+.sessions-top-bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid #dee2e6;
+}

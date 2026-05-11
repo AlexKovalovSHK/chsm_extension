@@ -1,105 +1,327 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <link rel="stylesheet" href="lib/bootstrap.min.css" />
-  <link rel="stylesheet" href="popup.css" />
-</head>
-<body class="bg-light">
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="stylesheet" href="lib/bootstrap.min.css" />
+        <link rel="stylesheet" href="popup.css" />
+        <link rel="stylesheet" href="sessionsTab.css" />
+    </head>
+    <body class="bg-light">
+        <div class="container-fluid p-2 position-relative">
+            <!-- LOADING OVERLAY -->
+            <div
+                id="global-loading"
+                class="position-absolute w-100 h-100 top-0 start-0 bg-white d-flex justify-content-center align-items-center"
+                style="z-index: 1000"
+            >
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
 
-<div class="container-fluid p-2 position-relative">
-  
-  <!-- LOADING OVERLAY -->
-  <div id="global-loading" class="position-absolute w-100 h-100 top-0 start-0 bg-white d-flex justify-content-center align-items-center" style="z-index: 1000;">
-    <div class="spinner-border text-primary" role="status"></div>
-  </div>
+            <!-- AUTH SECTION (Top) -->
+            <div class="card shadow-sm border-0 mb-2">
+                <div class="card-body p-2">
+                    <!-- Login Form -->
+                    <div id="auth-login" class="d-none">
+                        <h6 class="mb-2 fw-semibold">Heizreport Login</h6>
+                        <div
+                            id="login-error"
+                            class="alert alert-danger py-1 px-2 small d-none mb-2"
+                        ></div>
+                        <form id="form-login">
+                            <input
+                                type="email"
+                                id="input-email"
+                                class="form-control form-control-sm mb-2"
+                                placeholder="Email"
+                                required
+                            />
+                            <input
+                                type="password"
+                                id="input-password"
+                                class="form-control form-control-sm mb-2"
+                                placeholder="Password"
+                                required
+                            />
+                            <button
+                                type="submit"
+                                id="btn-login"
+                                class="btn btn-primary btn-sm w-100"
+                            >
+                                Login
+                            </button>
+                        </form>
+                    </div>
 
-  <!-- AUTH SECTION (Top) -->
-  <div class="card shadow-sm border-0 mb-2">
-    <div class="card-body p-2">
-      
-      <!-- Login Form -->
-      <div id="auth-login" class="d-none">
-        <h6 class="mb-2 fw-semibold">Heizreport Login</h6>
-        <div id="login-error" class="alert alert-danger py-1 px-2 small d-none mb-2"></div>
-        <form id="form-login">
-          <input type="email" id="input-email" class="form-control form-control-sm mb-2" placeholder="Email" required />
-          <input type="password" id="input-password" class="form-control form-control-sm mb-2" placeholder="Password" required />
-          <button type="submit" id="btn-login" class="btn btn-primary btn-sm w-100">Login</button>
-        </form>
-      </div>
+                    <!-- Active Account -->
+                    <div id="auth-active" class="d-none">
+                        <div class="fw-bold small mb-1 text-secondary">
+                            Active Account
+                        </div>
+                        <div class="d-flex gap-2">
+                            <input
+                                type="text"
+                                class="form-control form-control-sm bg-white"
+                                id="active-email"
+                                readonly
+                            />
+                            <button
+                                class="btn btn-outline-danger btn-sm px-3"
+                                id="btn-logout"
+                            >
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-      <!-- Active Account -->
-      <div id="auth-active" class="d-none">
-        <div class="fw-bold small mb-1 text-secondary">Active Account</div>
-        <div class="d-flex gap-2">
-          <input type="text" class="form-control form-control-sm bg-white" id="active-email" readonly />
-          <button class="btn btn-outline-danger btn-sm px-3" id="btn-logout">Logout</button>
+            <!-- MAIN CONTENT (Bottom) -->
+            <div id="main-content" class="card shadow-sm border-0 d-none">
+                <!-- Tabs Header -->
+                <ul
+                    class="nav nav-tabs nav-fill"
+                    id="popup-tabs"
+                    role="tablist"
+                    style="font-size: 0.85rem"
+                >
+                    <li class="nav-item" role="presentation">
+                        <button
+                            class="nav-link active py-1"
+                            id="classroom-tab"
+                            data-bs-toggle="tab"
+                            data-bs-target="#tab-classroom-content"
+                            type="button"
+                            role="tab"
+                            aria-controls="tab-classroom-content"
+                            aria-selected="true"
+                        >
+                            Classroom
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button
+                            class="nav-link py-1"
+                            id="users-tab"
+                            data-bs-toggle="tab"
+                            data-bs-target="#tab-users-content"
+                            type="button"
+                            role="tab"
+                            aria-controls="tab-users-content"
+                            aria-selected="false"
+                        >
+                            Users
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button
+                            class="nav-link py-1"
+                            id="sessions-tab"
+                            data-bs-toggle="tab"
+                            data-bs-target="#tab-sessions-content"
+                            type="button"
+                            role="tab"
+                            aria-controls="tab-sessions-content"
+                            aria-selected="false"
+                        >
+                            Sessions
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Global Header with Refresh -->
+                <div
+                    class="d-flex justify-content-between align-items-center p-2 border-bottom bg-light"
+                >
+                    <div class="small text-muted fw-medium" id="global-status">
+                        Готово
+                    </div>
+                    <button
+                        id="btn-refresh"
+                        class="btn btn-sm btn-outline-primary py-0 px-2"
+                        style="font-size: 0.75rem"
+                    >
+                        ↻ Refresh
+                    </button>
+                </div>
+
+                <div class="card-body p-0 tab-content" id="popup-tab-content">
+                    <!-- Classroom Tab Pane (Default Active) -->
+                    <div
+                        class="tab-pane fade show active"
+                        id="tab-classroom-content"
+                        role="tabpanel"
+                        aria-labelledby="classroom-tab"
+                    >
+                        <div
+                            id="classroom-loading"
+                            class="text-center py-4 d-none"
+                        >
+                            <div
+                                class="spinner-border spinner-border-sm text-primary"
+                                role="status"
+                            ></div>
+                        </div>
+                        <div
+                            id="classroom-error"
+                            class="alert alert-danger m-2 py-1 px-2 small d-none"
+                        ></div>
+                        <div
+                            id="classroom-empty"
+                            class="text-center text-muted py-4 small d-none"
+                        >
+                            Нет курсов
+                        </div>
+
+                        <div
+                            id="classroom-list"
+                            class="list-group list-group-flush"
+                            style="max-height: 400px; overflow-y: auto"
+                        >
+                            <!-- Classroom items will be rendered here -->
+                        </div>
+                    </div>
+
+                    <!-- Users Tab Pane -->
+                    <div
+                        class="tab-pane fade"
+                        id="tab-users-content"
+                        role="tabpanel"
+                        aria-labelledby="users-tab"
+                    >
+                        <!-- Users List -->
+                        <div id="users-loading" class="text-center py-4 d-none">
+                            <div
+                                class="spinner-border spinner-border-sm text-primary"
+                                role="status"
+                            ></div>
+                        </div>
+                        <div
+                            id="users-error"
+                            class="alert alert-danger m-2 py-1 px-2 small d-none"
+                        ></div>
+                        <div
+                            id="users-empty"
+                            class="text-center text-muted py-4 small d-none"
+                        >
+                            Нет пользователей
+                        </div>
+
+                        <div class="p-2 border-bottom bg-light">
+                            <input
+                                type="text"
+                                id="users-search"
+                                class="form-control form-control-sm mb-2"
+                                placeholder="Поиск по имени или email..."
+                            />
+                            <div
+                                class="btn-group btn-group-sm w-100"
+                                role="group"
+                            >
+                                <input
+                                    type="radio"
+                                    class="btn-check"
+                                    name="users-role-filter"
+                                    id="uf-all"
+                                    value=""
+                                    checked
+                                    autocomplete="off"
+                                />
+                                <label
+                                    class="btn btn-outline-secondary btn-sm py-0"
+                                    for="uf-all"
+                                    >All</label
+                                >
+                                <input
+                                    type="radio"
+                                    class="btn-check"
+                                    name="users-role-filter"
+                                    id="uf-students"
+                                    value="student"
+                                    autocomplete="off"
+                                />
+                                <label
+                                    class="btn btn-outline-secondary btn-sm py-0"
+                                    for="uf-students"
+                                    >Students</label
+                                >
+                                <input
+                                    type="radio"
+                                    class="btn-check"
+                                    name="users-role-filter"
+                                    id="uf-teachers"
+                                    value="teacher"
+                                    autocomplete="off"
+                                />
+                                <label
+                                    class="btn btn-outline-secondary btn-sm py-0"
+                                    for="uf-teachers"
+                                    >Teachers</label
+                                >
+                                <input
+                                    type="radio"
+                                    class="btn-check"
+                                    name="users-role-filter"
+                                    id="uf-admins"
+                                    value="admin"
+                                    autocomplete="off"
+                                />
+                                <label
+                                    class="btn btn-outline-secondary btn-sm py-0"
+                                    for="uf-admins"
+                                    >Admins</label
+                                >
+                            </div>
+                        </div>
+
+                        <div
+                            id="users-list"
+                            class="list-group list-group-flush"
+                        >
+                            <!-- User items will be rendered here -->
+                        </div>
+                    </div>
+
+                    <!-- Sessions Tab Pane -->
+                    <div
+                        class="tab-pane fade"
+                        id="tab-sessions-content"
+                        role="tabpanel"
+                        aria-labelledby="sessions-tab"
+                    >
+                        <div
+                            id="sessions-loading"
+                            class="text-center py-4 d-none"
+                        >
+                            <div
+                                class="spinner-border spinner-border-sm text-primary"
+                                role="status"
+                            ></div>
+                        </div>
+                        <div
+                            id="sessions-error"
+                            class="alert alert-danger m-2 py-1 px-2 small d-none"
+                        ></div>
+                        <div
+                            id="sessions-empty"
+                            class="text-center text-muted py-4 small d-none"
+                        >
+                            Нет сессий
+                        </div>
+
+                        <div
+                            id="sessions-list"
+                            class="list-group list-group-flush"
+                            style="max-height: 400px; overflow-y: auto"
+                        >
+                            <!-- Sessions accordion will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
 
-    </div>
-  </div>
-
-  <!-- MAIN CONTENT (Bottom) -->
-  <div id="main-content" class="card shadow-sm border-0 d-none">
-    
-    <!-- Tabs Header -->
-    <ul class="nav nav-tabs nav-fill" id="popup-tabs" role="tablist" style="font-size: 0.85rem;">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active py-1" id="classroom-tab" data-bs-toggle="tab" data-bs-target="#tab-classroom-content" type="button" role="tab" aria-controls="tab-classroom-content" aria-selected="true">Classroom</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link py-1" id="users-tab" data-bs-toggle="tab" data-bs-target="#tab-users-content" type="button" role="tab" aria-controls="tab-users-content" aria-selected="false">Users</button>
-      </li>
-    </ul>
-
-    <!-- Global Header with Refresh -->
-    <div class="d-flex justify-content-between align-items-center p-2 border-bottom bg-light">
-      <div class="small text-muted fw-medium" id="global-status">Готово</div>
-      <button id="btn-refresh" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;">
-        ↻ Refresh
-      </button>
-    </div>
-
-    <div class="card-body p-0 tab-content" id="popup-tab-content">
-      <!-- Classroom Tab Pane (Default Active) -->
-      <div class="tab-pane fade show active" id="tab-classroom-content" role="tabpanel" aria-labelledby="classroom-tab">
-        <div id="classroom-loading" class="text-center py-4 d-none">
-          <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-        </div>
-        <div id="classroom-error" class="alert alert-danger m-2 py-1 px-2 small d-none"></div>
-        <div id="classroom-empty" class="text-center text-muted py-4 small d-none">Нет курсов</div>
-        
-        <div id="classroom-list" class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
-          <!-- Classroom items will be rendered here -->
-        </div>
-      </div>
-
-      <!-- Users Tab Pane -->
-      <div class="tab-pane fade" id="tab-users-content" role="tabpanel" aria-labelledby="users-tab">
-        <!-- Users List -->
-        <div id="users-loading" class="text-center py-4 d-none">
-          <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-        </div>
-        <div id="users-error" class="alert alert-danger m-2 py-1 px-2 small d-none"></div>
-        <div id="users-empty" class="text-center text-muted py-4 small d-none">Нет пользователей</div>
-        
-        <div id="users-list" class="list-group list-group-flush" style="max-height: 280px; overflow-y: auto;">
-          <!-- User items will be rendered here -->
-        </div>
-        
-        <!-- Pagination -->
-        <div class="p-2 border-top bg-light">
-          <ul class="pagination pagination-sm justify-content-center mb-0" id="users-pagination"></ul>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<script src="lib/bootstrap.bundle.min.js"></script>
-<script src="popup.js"></script>
-</body>
+        <script src="lib/bootstrap.bundle.min.js"></script>
+        <script src="popup.js"></script>
+        <script src="sessionsTab.js"></script>
+    </body>
 </html>
