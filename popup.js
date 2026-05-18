@@ -1,4 +1,5 @@
 let allUsers = [];
+let classroomUsersMap = {}; // email.toLowerCase() -> { tgId, firstName, lastName, email }
 
 function applyUsersFilter() {
   const searchVal = document
@@ -65,6 +66,7 @@ function showUnauthenticated() {
   document.getElementById("auth-login").classList.remove("d-none");
   document.getElementById("auth-active").classList.add("d-none");
   document.getElementById("main-content").classList.add("d-none");
+  classroomUsersMap = {}; // сброс кэша Classroom
 }
 
 function showAuthenticated(user) {
@@ -117,6 +119,7 @@ formLogin.addEventListener("submit", async (e) => {
 
 document.getElementById("btn-logout").addEventListener("click", async () => {
   await chrome.storage.local.remove(["chsm_token", "chsm_users_cache"]);
+  classroomUsersMap = {}; // сброс кэша Classroom
   checkAuth();
 });
 
@@ -273,6 +276,45 @@ function formatTime(dateStr) {
   });
 }
 
+// ============================================================
+// Classroom — обогащение студентов tgId через матчинг по email
+// ============================================================
+
+async function ensureClassroomUsersLoaded(forceRefresh = false) {
+  if (!forceRefresh && Object.keys(classroomUsersMap).length > 0) return;
+
+  const response = await chrome.runtime.sendMessage({
+    type: "GET_USERS",
+    payload: { search: "", status: "", role: "", forceRefresh },
+  });
+
+  if (!response || !response.success) return;
+
+  const users = response.users || [];
+  classroomUsersMap = {};
+  users.forEach((user) => {
+    if (user.email) {
+      classroomUsersMap[user.email.toLowerCase()] = {
+        tgId: user.tgId || "",
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email,
+      };
+    }
+  });
+}
+
+function enrichStudentsWithTg(students) {
+  return students.map((student) => {
+    if (!student.email) return { ...student, tgId: "" };
+    const matchedUser = classroomUsersMap[student.email.toLowerCase()];
+    return {
+      ...student,
+      tgId: matchedUser?.tgId || "",
+    };
+  });
+}
+
 async function loadClassroom(forceRefresh = false) {
   const loading = document.getElementById("classroom-loading");
   const error = document.getElementById("classroom-error");
@@ -286,6 +328,9 @@ async function loadClassroom(forceRefresh = false) {
   list.innerHTML = "";
   if (globalStatus)
     globalStatus.textContent = forceRefresh ? "Обновление..." : "Загрузка...";
+
+  // === Обогащение: загружаем пользователей для матчинга по email ===
+  await ensureClassroomUsersLoaded(forceRefresh);
 
   const response = await chrome.runtime.sendMessage({
     type: "GET_CLASSROOM_REPORT",
@@ -304,11 +349,17 @@ async function loadClassroom(forceRefresh = false) {
     return;
   }
 
-  const {
+  let {
     courses = [],
     fromCache = false,
     fetchedAt = null,
   } = response.data || {};
+
+  // === Обогащение: добавляем tgId к каждому студенту ===
+  courses = courses.map((course) => ({
+    ...course,
+    students: enrichStudentsWithTg(course.students || []),
+  }));
 
   if (globalStatus) {
     if (fromCache && fetchedAt) {
@@ -338,21 +389,26 @@ function renderClassroom(courses) {
 
       const studentsHtml = course.students
         ? course.students
-            .map(
-              (student) => `
+            .map((student) => {
+              const hasTelegram = !!student.tgId;
+              return `
       <div class="list-group-item d-flex align-items-center bg-transparent border-0 py-1 px-1">
         <div class="form-check d-flex align-items-center w-100">
           <input class="form-check-input me-2 student-checkbox" type="checkbox"
-                 data-student-id="${student.id}" data-name="${student.name}" data-email="${student.email}">
+                 data-student-id="${student.id}"
+                 data-name="${student.name}"
+                 data-email="${student.email}"
+                 data-tg-id="${student.tgId || ""}">
           <label class="form-check-label small text-truncate" style="cursor: pointer;">
             <span class="fw-semibold">${student.name}</span>
             <br>
             <span class="text-muted" style="font-size: 0.7rem;">${student.email}</span>
           </label>
         </div>
+        <span class="tg-dot ${hasTelegram ? "active" : "inactive"}" title="${hasTelegram ? "Есть Telegram" : "Нет Telegram"}"></span>
       </div>
-    `,
-            )
+    `;
+            })
             .join("")
         : '<div class="small text-muted p-2">Нет студентов</div>';
 
@@ -376,11 +432,20 @@ function renderClassroom(courses) {
         <!-- Collapsible Students List -->
         <div class="collapse" id="${collapseId}" data-course-name="${course.name}">
           <div class="p-2 bg-light border-top">
-            <!-- Select All & Message -->
+            <!-- Select All + Delivery method -->
             <div class="d-flex justify-content-between align-items-center mb-2 px-1">
               <div class="form-check">
                 <input class="form-check-input select-all-checkbox" type="checkbox" id="select-all-${collapseId}" data-target="${collapseId}">
                 <label class="form-check-label small" for="select-all-${collapseId}" style="cursor: pointer;">Выбрать всех</label>
+              </div>
+              <div class="d-flex align-items-center gap-1" style="font-size:0.7rem;">
+                <span class="text-muted">Доставка:</span>
+                <div class="btn-group btn-group-sm" role="group">
+                  <input type="checkbox" class="btn-check classroom-delivery-check" id="del-tg-${collapseId}" data-method="tg" autocomplete="off">
+                  <label class="btn btn-outline-secondary py-0 px-1" for="del-tg-${collapseId}" style="font-size:0.7rem;">TG</label>
+                  <input type="checkbox" class="btn-check classroom-delivery-check" id="del-email-${collapseId}" data-method="email" autocomplete="off">
+                  <label class="btn btn-outline-secondary py-0 px-1" for="del-email-${collapseId}" style="font-size:0.7rem;">Email</label>
+                </div>
               </div>
             </div>
 
@@ -432,15 +497,44 @@ document
     }
 
     // Find all checked checkboxes in this specific collapse section
-    const selectedEmails = [];
+    // Determine delivery method
+    const deliveryChecks = collapseEl.querySelectorAll(
+      ".classroom-delivery-check:checked",
+    );
+    const methods = Array.from(deliveryChecks).map((cb) =>
+      cb.getAttribute("data-method"),
+    );
+    if (methods.length === 0) {
+      alert("Выберите способ доставки (TG или Email)");
+      return;
+    }
+    const method =
+      methods.includes("tg") && methods.includes("email") ? "both" : methods[0];
+
+    // Collect checked students with tgId + email
     const checkboxes = collapseEl.querySelectorAll(".student-checkbox:checked");
 
-    checkboxes.forEach((cb) => {
-      selectedEmails.push(cb.getAttribute("data-email"));
-    });
-
-    if (selectedEmails.length === 0) {
+    if (checkboxes.length === 0) {
       alert("Выберите хотя бы одного студента");
+      return;
+    }
+
+    // Build users array — filter by method
+    const users = Array.from(checkboxes)
+      .map((cb) => ({
+        tgId: cb.getAttribute("data-tg-id"),
+        email: cb.getAttribute("data-email"),
+      }))
+      .filter((u) => {
+        if (method === "tg") return u.tgId;
+        if (method === "email") return u.email;
+        return u.tgId || u.email;
+      });
+
+    if (users.length === 0) {
+      alert(
+        "Ни у одного из выбранных студентов нет контакта для выбранного способа доставки",
+      );
       return;
     }
 
@@ -451,19 +545,22 @@ document
       '<span class="spinner-border spinner-border-sm"></span> Sending...';
 
     const response = await chrome.runtime.sendMessage({
-      type: "BROADCAST_MESSAGE",
+      type: "SEND_SESSION_BROADCAST",
       payload: {
-        users: selectedEmails,
+        users,
         text: messageText,
+        method,
       },
     });
 
     btn.disabled = false;
     btn.textContent = originalText;
 
+    const globalStatus = document.getElementById("global-status");
+
     if (response && response.success) {
-      console.log(`Success for "${courseName}":`, response.result);
-      //alert(`Сообщение успешно отправлено ${selectedEmails.length} пользователям курса "${courseName}"`);
+      console.log(`Broadcast success for "${courseName}":`, response.result);
+      if (globalStatus) globalStatus.textContent = "Сообщение отправлено";
       // Clear message after success
       collapseEl.querySelector(".broadcast-message-text").value = "";
       // Uncheck all checkboxes
@@ -471,10 +568,9 @@ document
       const selectAllCb = collapseEl.querySelector(".select-all-checkbox");
       if (selectAllCb) selectAllCb.checked = false;
     } else {
-      console.error("Broadcast Error:", response.error);
-      alert(
-        "Ошибка при отправке сообщения: " + (response.error || "Unknown error"),
-      );
+      console.error("Broadcast Error:", response?.error);
+      alert("Ошибка при отправке: " + (response?.error || "Unknown error"));
+      if (globalStatus) globalStatus.textContent = "Ошибка отправки";
     }
   });
 
