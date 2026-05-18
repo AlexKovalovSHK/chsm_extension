@@ -55,7 +55,7 @@ async function checkAuth() {
   setGlobalLoading(false);
 
   if (response && response.success) {
-    showAuthenticated(response.user);
+    showAuthenticated(response.data);
     loadClassroom(); // Default active tab is now Classroom
   } else {
     showUnauthenticated();
@@ -179,7 +179,7 @@ async function loadUsers(forceRefresh = false) {
     return;
   }
 
-  allUsers = response.users || [];
+  allUsers = response.data || [];
 
   if (allUsers.length === 0) {
     usersEmpty.classList.remove("d-none");
@@ -290,7 +290,7 @@ async function ensureClassroomUsersLoaded(forceRefresh = false) {
 
   if (!response || !response.success) return;
 
-  const users = response.users || [];
+  const users = response.data || [];
   classroomUsersMap = {};
   users.forEach((user) => {
     if (user.email) {
@@ -559,7 +559,7 @@ document
     const globalStatus = document.getElementById("global-status");
 
     if (response && response.success) {
-      console.log(`Broadcast success for "${courseName}":`, response.result);
+      console.log(`Broadcast success for "${courseName}":`, response.data);
       if (globalStatus) globalStatus.textContent = "Сообщение отправлено";
       // Clear message after success
       collapseEl.querySelector(".broadcast-message-text").value = "";
@@ -699,7 +699,7 @@ document.getElementById("users-list").addEventListener("click", async (e) => {
   const globalStatus = document.getElementById("global-status");
 
   if (response && response.success) {
-    console.log("Users broadcast success:", response.result);
+    console.log("Users broadcast success:", response.data);
     if (globalStatus) globalStatus.textContent = "Сообщение отправлено";
     container.querySelector(".users-broadcast-text").value = "";
     checkedBoxes.forEach((cb) => (cb.checked = false));

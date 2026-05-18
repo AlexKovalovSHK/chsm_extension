@@ -48,7 +48,7 @@ async function loadLookups() {
     forceRefresh: false,
   });
   if (usersRes?.success) {
-    usersRes.users.forEach((u) => (usersByIdMap[u.id] = u));
+    usersRes.data.forEach((u) => (usersByIdMap[u.id] = u));
   }
 }
 
@@ -457,7 +457,7 @@ document.addEventListener("click", async (e) => {
   const globalStatus = document.getElementById("global-status");
 
   if (response && response.success) {
-    console.log(`Broadcast success for run ${runId}:`, response.result);
+    console.log(`Broadcast success for run ${runId}:`, response.data);
     if (globalStatus) globalStatus.textContent = "Сообщение отправлено";
     // Clear message and uncheck
     container.querySelector(".session-broadcast-text").value = "";
