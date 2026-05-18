@@ -27,7 +27,7 @@ self.api = {
   async login(email, password) {
     return fetch(`${BASE_URL}/auth/login`, {
       method: "POST",
-      //headers: getHeaders(null, { "Content-Type": "application/json" }),
+      headers: getHeaders(null, { "Content-Type": "application/json" }),
       body: JSON.stringify({ email, password }),
     });
   },
